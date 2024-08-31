@@ -11,6 +11,6 @@ public class DTRPGClient {
 /**
 */
     public init(token : String) {
-        this.token = token
+        self.token = token
     }
 }

@@ -1,7 +1,9 @@
 import XCTest
-@testable import dtrpg_client_swift
 
-final class dtrpg_client_swiftTests: XCTestCase {
+@testable import DTRPGClient
+
+final class DTRPGClientTests: XCTestCase {
+
     func testExample() throws {
         // XCTest Documentation
         // https://developer.apple.com/documentation/xctest
