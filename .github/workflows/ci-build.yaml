@@ -1,0 +1,48 @@
+name: CI
+
+concurrency: ci
+
+on:
+    push:
+        branches:
+            - master
+            - develop
+    workflow_dispatch:
+
+jobs:
+    build:
+        name: Swift ${{ matrix.swift }} on ${{ matrix.os }}
+        strategy:
+            matrix:
+                os: [ubuntu-latest, macos-latest, windows-latest]
+                swift: ["5.10"]
+        runs-on: ${{ matrix.os }}
+
+        steps:
+            - uses: swift-actions/setup-swift@65540b95f51493d65f5e59e97dcef9629ddf11bf
+              with:
+                swift-version: ${{ matrix.swift }}
+
+            - uses: actions/checkout@v4
+              with:
+                fetch-tags: true
+                fetch-depth: 0
+                show-progress: true
+
+            - id: get_latest_tag
+              run: |
+                      git tag --sort version:refname
+                      tag=$(git tag --sort version:refname | tail -1)
+                      echo "tag=$tag" >> $GITHUB_OUTPUT
+
+            - uses: actions-ecosystem/action-bump-semver@v1
+              id: bump_semver
+              with:
+                  current_version: ${{ steps.get_latest_tag.outputs.tag }}
+                  level: patch
+
+            - id: build
+              run: swift build -v
+
+            - id: test
+              run: swift test -v
