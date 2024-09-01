@@ -11,7 +11,7 @@ on:
 
 jobs:
     build:
-        name: Swift ${{ matrix.swift }} on ${{ matrix.os }}
+        name: Build swift ${{ matrix.swift }} on ${{ matrix.os }}
         strategy:
             matrix:
                 os:
@@ -33,20 +33,44 @@ jobs:
                 fetch-depth: 0
                 show-progress: true
 
-            - id: get_latest_tag
-              run: |
-                      git tag --sort version:refname
-                      tag=$(git tag --sort version:refname | tail -1)
-                      echo "tag=${tag:-0.0.0}" >> $GITHUB_OUTPUT
-
-            - uses: actions-ecosystem/action-bump-semver@v1
-              id: bump_semver
-              with:
-                  current_version: ${{ steps.get_latest_tag.outputs.tag }}
-                  level: patch
-
             - id: build
               run: swift build -v
 
             - id: test
               run: swift test -v
+
+    tag:
+      name: Tag repo
+      runs-on: ubuntu-latest
+
+      needs: [build]
+
+      steps:
+        - uses: swift-actions/setup-swift@v2
+          with:
+            swift-version: ${{ matrix.swift }}
+
+        - uses: actions/checkout@v4
+          with:
+            fetch-tags: true
+            fetch-depth: 0
+            show-progress: true
+
+        - id: get_latest_tag
+          run: |
+                git tag --sort version:refname
+                tag=$(git tag --sort version:refname | tail -1)
+                echo "tag=${tag:-0.0.0}" >> $GITHUB_OUTPUT
+
+        - uses: actions-ecosystem/action-bump-semver@v1
+          id: bump_semver
+          with:
+            current_version: ${{ steps.get_latest_tag.outputs.tag }}
+            level: patch
+
+        - id: tag_repo
+          run: |
+            git config --global user.email 'ci@pilgrimagesoftware.com'
+            git config --global user.name 'Pilgrimage Software CI'
+            git tag -a -m 'Tag: ${{ steps.bump_semver.outputs.new_version }}' "${{ steps.bump_semver.outputs.new_version }}"
+            git push origin --tags
