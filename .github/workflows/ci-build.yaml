@@ -37,7 +37,7 @@ jobs:
               run: |
                       git tag --sort version:refname
                       tag=$(git tag --sort version:refname | tail -1)
-                      echo "tag=$tag" >> $GITHUB_OUTPUT
+                      echo "tag=${tag:-0.0.0}" >> $GITHUB_OUTPUT
 
             - uses: actions-ecosystem/action-bump-semver@v1
               id: bump_semver
